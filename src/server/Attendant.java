@@ -1,4 +1,4 @@
-package controller;
+package server;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -7,24 +7,22 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
-public class AtendenteThread implements Runnable {
+public class Attendant implements Runnable {
 
-	private ServidorThread servidor;
+	private Server server;
 	private Socket socket;
 	private BufferedReader in;
 	private PrintStream out;
-	private boolean inicializado;
-	private boolean executando;
+	private boolean started;
+	private boolean running;
 	private Thread thread;
-	private String nomeCliente;
+	private String clientName;
 
-
-
-	public AtendenteThread(ServidorThread servidor, Socket socket) throws Exception {
-		this.servidor = servidor;
+	public Attendant(Server server, Socket socket) throws Exception {
+		this.server = server;
 		this.socket = socket;
-		this.inicializado = false;
-		this.executando = false;
+		this.started = false;
+		this.running = false;
 		open();
 	}
 
@@ -32,7 +30,7 @@ public class AtendenteThread implements Runnable {
 		try {
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintStream(socket.getOutputStream());
-			inicializado = true;
+			started = true;
 		} catch (Exception e) {
 			close();
 			throw e;
@@ -65,54 +63,57 @@ public class AtendenteThread implements Runnable {
 		out = null;
 		socket = null;
 
-		inicializado = false;
-		executando = false;
+		started = false;
+		running = false;
 
 		thread = null;
 	}
 
-	public void send(String mensagem) {
-		out.println(mensagem);
+	public void send(String message) {
+		out.println(message);
 	}
 
 	public void start() {
-		if (!inicializado || executando) {
+		if (!started || running) {
 			return;
 		}
-		executando = true;
+		running = true;
 		thread = new Thread(this);
 		thread.start();
 	}
 
 	public void stop() throws Exception {
-		executando = false;
+		running = false;
 		if (thread != null) {
 			thread.join();
 		}
 
 	}
 
+	/* Loop de interação com cada cliente. A primeira mensagem recebida é o nome do cliente. 
+	 * 
+	 * */
 	@Override
 	public void run() {
-		boolean sentName = false;
-		while (executando) {
+		boolean isNameSent = false;
+		while (running) {
 			try {
 				socket.setSoTimeout(2500);
-				String mensagem = in.readLine();
-				if (mensagem == null) {
+				String message = in.readLine();
+				if (message == null) {
 					break;
 				}
-				if (sentName==false){
-					sentName = true;
-					nomeCliente = mensagem;
-					servidor.broadcast(this, nomeCliente+ " entrou no chat");
+				if (isNameSent==false){
+					isNameSent = true;
+					clientName = message;
+					server.broadcast(this, clientName+ " entrou no chat");
 				}else{
-					servidor.broadcast(this, nomeCliente+": "+mensagem);
+					server.broadcast(this, clientName+": "+message);
 				}
 				
 
 				System.out.println("Mensagem recebida do cliente [" + socket.getInetAddress().getHostName() + ": "
-						+ socket.getPort() + "] " + mensagem);
+						+ socket.getPort() + "] " + message);
 			
 
 			} catch (SocketException e) {

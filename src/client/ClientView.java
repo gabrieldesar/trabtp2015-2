@@ -1,4 +1,4 @@
-package view;
+package client;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -11,21 +11,19 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import controller.ClienteThread;
-
-public class ClientFrame extends JFrame implements ActionListener {
+public class ClientView extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = -3919707070322327843L;
 	private JPanel panelMain;
 	private JPanel panelNorth;
 	private JPanel panelSouth;
-	private JTextField texto;
-	private JTextArea text;
-	private ClienteThread cliente;
+	private JTextField textField;
+	private JTextArea textArea;
+	private ClientThread clientThread;
 	final int WIDTH = 500;
 	final int HEIGHT = 425;
 
-	public ClientFrame() {
+	public ClientView() {
 		this.setTitle("Cliente-Servidor");
 
 		panelNorth = new JPanel();
@@ -56,12 +54,12 @@ public class ClientFrame extends JFrame implements ActionListener {
 	public JPanel panelNorth() {
 		panelNorth.removeAll();
 
-		text = new JTextArea(20, 40);
-		JScrollPane scr = new JScrollPane(text);
-		text.setEditable(false);
-		text.setLineWrap(true);
-		text.setWrapStyleWord(true);
-		text.setEnabled(false);
+		textArea = new JTextArea(20, 40);
+		JScrollPane scr = new JScrollPane(textArea);
+		textArea.setEditable(false);
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
+		textArea.setEnabled(false);
 		panelNorth.add(scr);
 
 		return panelNorth;
@@ -70,11 +68,11 @@ public class ClientFrame extends JFrame implements ActionListener {
 	public JPanel panelSouth() {
 		panelSouth.removeAll();
 
-		texto = new JTextField(33);
+		textField = new JTextField(33);
 		JButton button = new JButton("Enviar");
 		button.addActionListener(this);
 
-		panelSouth.add(texto);
+		panelSouth.add(textField);
 		panelSouth.add(button);
 		return panelSouth;
 	}
@@ -85,23 +83,23 @@ public class ClientFrame extends JFrame implements ActionListener {
 		return panelMain;
 	}
 
-	public void addThread(ClienteThread thread) {
-		this.cliente = thread;
+	public void addThread(ClientThread thread) {
+		this.clientThread = thread;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		if (!texto.getText().equals("")) {
-			text.append(cliente.getName() + ": " + texto.getText() + "\n");
-			if (!cliente.isExecutando()) {
+		if (!textField.getText().equals("")) {
+			textArea.append(textField.getText() + "\n");
+			if (!clientThread.isRunning()) {
 				return;
 			}
-			cliente.send(texto.getText());
+			clientThread.send(textField.getText());
 		}
-		texto.setText("");
+		textField.setText("");
 	}
 
-	public void printMsg(String mensagem) {
-		text.append(mensagem);
+	public void printMessage(String message) {
+		textArea.append(message);
 	}
 }

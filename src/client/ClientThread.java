@@ -1,4 +1,4 @@
-package controller;
+package client;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -6,33 +6,32 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-import view.ClientFrame;
-
-public class ClienteThread implements Runnable {
+public class ClientThread implements Runnable {
 
 	private String name;
-	private ClientFrame viewCliente;
+	private ClientView clientView;
 	private Socket socket;
 	private BufferedReader in;
 	private PrintStream out;
-	private boolean inicializado;
-	private boolean executando;
+	private boolean started;
+	private boolean running;
 	private Thread thread;
 
-	public ClienteThread(String endereco, int porta, ClientFrame viewCliente, String name) throws Exception {
+	public ClientThread(String address, int port, ClientView clientView, String name) throws Exception {
 		this.setName(name);
-		inicializado = false;
-		executando = false;
-		this.viewCliente = viewCliente;
-		open(endereco, porta);
+		started = false;
+		running = false;
+		this.clientView = clientView;
+		open(address, port);
 	}
 
-	public void open(String endereco, int porta) throws Exception {
+	//Abre conexão com o servidor
+	public void open(String address, int port) throws Exception {
 		try {
-			socket = new Socket(endereco, porta);
+			socket = new Socket(address, port);
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintStream(socket.getOutputStream());
-			inicializado = true;
+			started = true;
 		} catch (Exception e) {
 			System.out.println(e);
 			close();
@@ -65,16 +64,16 @@ public class ClienteThread implements Runnable {
 		in = null;
 		out = null;
 		socket = null;
-		inicializado = false;
-		executando = false;
+		started = false;
+		running = false;
 		thread = null;
 	}
 
 	public void start() {
-		if (!inicializado || executando) {
+		if (!started || running) {
 			return;
 		}
-		executando = true;
+		running = true;
 		thread = new Thread(this);
 		thread.start();
 		//Enviando nome do cliente
@@ -82,37 +81,37 @@ public class ClienteThread implements Runnable {
 	}
 
 	public void stop() throws Exception {
-		executando = false;
+		running = false;
 		if (thread != null) {
 			thread.join();
 		}
 	}
 
-	public boolean isExecutando() {
-		return executando;
+	public boolean isRunning() {
+		return running;
 	}
 
-	public void send(String mensagem) {
-		out.println(mensagem);
+	public void send(String message) {
+		out.println(message);
 	}
 
+	//Loop de interação do cliente com o servidor
 	@Override
 	public void run() {
-		while (executando) {
+		while (running) {
 			try {
 				socket.setSoTimeout(2500);
 
-				String mensagem = in.readLine();
+				String message = in.readLine();
 
-				if (mensagem == null) {
+				if (message == null) {
 					break;
 				}
 
-				System.out.println("Mensagem enviada pelo servidor: " + mensagem);
-				viewCliente.printMsg(mensagem + "\n");
+				System.out.println("Mensagem enviada pelo servidor: " + message);
+				clientView.printMessage(message + "\n");
 			} catch (SocketTimeoutException e) {
-				// ignorar
-
+				//nothing
 			} catch (Exception e) {
 				System.out.println(e);
 				break;
