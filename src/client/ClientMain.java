@@ -22,15 +22,15 @@ public class ClientMain {
 				null, null);
 		System.out.println("Ip: " + ip);
 		clientView = new ClientView();
-		startClient(ip, PORT, name);
+		startClient(ip, name);
 	}
 
-	public void startClient(String ip, int port, String name) {
+	public void startClient(String ip, String name) {
 		try {
-			clientThread = new ClientThread(ip, port, clientView, name);
+			clientThread = new ClientThread(ip, PORT, clientView, name);
 
 		} catch (ConnectException e) {
-			System.out.println("Host " + ip + ":" + port + " inexistente.");
+			System.out.println("Host " + ip + ":" + PORT + " inexistente.");
 			System.exit(0);
 		} catch (Exception e) {
 			System.out.println("Erro ao conectar");

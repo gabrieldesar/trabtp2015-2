@@ -13,13 +13,13 @@ public class ClientThread implements Runnable {
 	private Socket socket;
 	private BufferedReader in;
 	private PrintStream out;
-	private boolean started;
+	private boolean canStart;
 	private boolean running;
 	private Thread thread;
 
 	public ClientThread(String address, int port, ClientView clientView, String name) throws Exception {
 		this.setName(name);
-		started = false;
+		canStart = false;
 		running = false;
 		this.clientView = clientView;
 		open(address, port);
@@ -29,9 +29,10 @@ public class ClientThread implements Runnable {
 	public void open(String address, int port) throws Exception {
 		try {
 			socket = new Socket(address, port);
+			socket.setSoTimeout(0);
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintStream(socket.getOutputStream());
-			started = true;
+			canStart = true;
 		} catch (Exception e) {
 			System.out.println(e);
 			close();
@@ -64,13 +65,13 @@ public class ClientThread implements Runnable {
 		in = null;
 		out = null;
 		socket = null;
-		started = false;
+		canStart = false;
 		running = false;
 		thread = null;
 	}
 
 	public void start() {
-		if (!started || running) {
+		if (!canStart || running) {
 			return;
 		}
 		running = true;
@@ -100,8 +101,6 @@ public class ClientThread implements Runnable {
 	public void run() {
 		while (running) {
 			try {
-				socket.setSoTimeout(2500);
-
 				String message = in.readLine();
 
 				if (message == null) {
@@ -110,8 +109,6 @@ public class ClientThread implements Runnable {
 
 				System.out.println("Mensagem enviada pelo servidor: " + message);
 				clientView.printMessage(message + "\n");
-			} catch (SocketTimeoutException e) {
-				//nothing
 			} catch (Exception e) {
 				System.out.println(e);
 				break;

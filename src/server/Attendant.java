@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 
 public class Attendant implements Runnable {
 
@@ -13,7 +12,7 @@ public class Attendant implements Runnable {
 	private Socket socket;
 	private BufferedReader in;
 	private PrintStream out;
-	private boolean started;
+	private boolean canStart;
 	private boolean running;
 	private Thread thread;
 	private String clientName;
@@ -21,16 +20,17 @@ public class Attendant implements Runnable {
 	public Attendant(Server server, Socket socket) throws Exception {
 		this.server = server;
 		this.socket = socket;
-		this.started = false;
+		this.canStart = false;
 		this.running = false;
 		open();
 	}
 
 	private void open() throws Exception {
 		try {
+			socket.setSoTimeout(0);
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintStream(socket.getOutputStream());
-			started = true;
+			canStart = true;
 		} catch (Exception e) {
 			close();
 			throw e;
@@ -63,7 +63,7 @@ public class Attendant implements Runnable {
 		out = null;
 		socket = null;
 
-		started = false;
+		canStart = false;
 		running = false;
 
 		thread = null;
@@ -74,7 +74,7 @@ public class Attendant implements Runnable {
 	}
 
 	public void start() {
-		if (!started || running) {
+		if (!canStart || running) {
 			return;
 		}
 		running = true;
@@ -98,7 +98,6 @@ public class Attendant implements Runnable {
 		boolean isNameSent = false;
 		while (running) {
 			try {
-				socket.setSoTimeout(2500);
 				String message = in.readLine();
 				if (message == null) {
 					break;
@@ -119,9 +118,7 @@ public class Attendant implements Runnable {
 			} catch (SocketException e) {
 				System.out.println("O Cliente fechou de forma inesperada, encerrar conexão...");
 				break;
-			} catch (SocketTimeoutException e) {
-				// ignorar
-			} catch (Exception e) {
+			}  catch (Exception e) {
 				System.out.println(e);
 			}
 

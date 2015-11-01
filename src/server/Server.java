@@ -1,5 +1,6 @@
 package server;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -11,22 +12,24 @@ public class Server implements Runnable {
 
 	private ServerSocket serverSocket;
 	private ArrayList<Attendant> attendants;
-	private boolean started;
+	private boolean canStart;
 	private boolean running;
 	private Thread thread;
 	public static final Integer PORT = 2525;
 
 	public Server(int port) throws Exception {
 		attendants = new ArrayList<Attendant>();
-		started = false;
+		canStart = false;
 		running = false;
 		open(port);
 	}
 
-/*		Abre um server socket, especificada numa dada porta*/
-	private void open(int port) throws Exception {
+/*		Abre um server socket, especificada numa dada porta. Estabelece uma conexão pelo protocolo TCP.*/
+	private void open(int port) throws IOException, SocketTimeoutException {
 		serverSocket = new ServerSocket(port);
-		started = true;
+		//Timeout de leitura do dado da conexao. 0 significa esperar até a chegada do dado.
+		serverSocket.setSoTimeout(0);
+		canStart = true;
 	}
 
 	private void close() {
@@ -44,7 +47,7 @@ public class Server implements Runnable {
 		}
 
 		serverSocket = null;
-		started = false;
+		canStart = false;
 		running = false;
 		thread = null;
 	}
@@ -67,7 +70,7 @@ public class Server implements Runnable {
 	}
 
 	public void start() {
-		if (!started || running) {
+		if (!canStart || running) {
 			return;
 		}
 		running = true;
@@ -90,19 +93,14 @@ public class Server implements Runnable {
 		System.out.println("Aguardando Conexão");
 		while (running) {
 			try {
-				serverSocket.setSoTimeout(2500);
 				Socket socket = serverSocket.accept();
-
 				System.out.println("Conexão Estabelecida");
-
-				Attendant atendente = new Attendant(this, socket);
-				atendente.start();
-
-				attendants.add(atendente);
-
-			} catch (SocketTimeoutException e) {
-				// ignorar
-			} catch (Exception e) {
+				
+				Attendant attendant = new Attendant(this, socket);
+				attendant.start();
+				attendants.add(attendant);
+				
+			}   catch (Exception e) {
 				System.out.println(e);
 				break;
 			}
