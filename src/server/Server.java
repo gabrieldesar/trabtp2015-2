@@ -117,7 +117,9 @@ public class Server implements Runnable {
 		servidor.start();
 
 		System.out.println("Pressione ENTER para encerrar o Servidor");
-		new Scanner(System.in).nextLine();
+		Scanner s = new Scanner(System.in);
+		s.nextLine();
+		s.close();
 		System.out.println("Encerrando o servidor...");
 		servidor.stop();
 		System.out.println("Servidor fechado.");
